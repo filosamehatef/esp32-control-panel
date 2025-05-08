@@ -3,10 +3,13 @@
 <head>
   <title>SFA Control Panel (Firebase)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Firebase SDK -->
-  <script  src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-  <script  src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
   <style>
+    /* [Keep all your existing CSS exactly the same] */
+  </style>
+</head>
+<body>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -195,59 +198,73 @@
     </div>
   </div>
 
-  <script>
-    // Firebase Config (match your ESP32)
+ <script>
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyB0RjvOZYVNqTJN6Ri709GMnvMP1QsG3fk",
       databaseURL: "https://espcontrol-58d06-default-rtdb.firebaseio.com/"
     };
 
     // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
+    const app = firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
+    
+    // State variables
+    let isMobile = false;
+    let isManual = false;
 
     // Firebase Realtime Listener
     database.ref('/').on('value', (snapshot) => {
       const data = snapshot.val();
-      updateUI(data);
+      if (data) {
+        updateUI(data);
+      }
     });
 
     // Update UI with Firebase data
     function updateUI(data) {
+      // Update lights
       document.getElementById("motor1Light").className = 
         `light motor1 ${data.motor1 ? 'on' : ''}`;
       document.getElementById("motor2Light").className = 
-        `light motor1 ${data.motor2 ? 'on' : ''}`;
-      document.getElementById("hornStatus").className = 
-        `light emergency ${data.emergency ? 'on' : ''}`;
+        `light motor2 ${data.motor2 ? 'on' : ''}`;
+      document.getElementById("hornLight").className = 
+        `light horn ${data.emergency ? 'alarm' : ''}`;
+      
+      // Update water level
       document.getElementById("waterFill").style.width = 
         `${data.waterLevel * 25}%`;
-              // Update control mode
+      
+      // Update status text
       document.getElementById("controlModeStatus").textContent =
-         `${isMobile ? 'Mobile Control' : 'Panel Control'}`;
+        data.controlMode === 'mobile' ? 'Mobile Control' : 'Panel Control';
+      document.getElementById("modeStatus").textContent =
+        data.mode === 'manual' ? 'Manual' : 'Automatic';
+      document.getElementById("motor1Status").textContent =
+        data.motor1 ? 'ON' : 'OFF';
+      document.getElementById("motor2Status").textContent =
+        data.motor2 ? 'ON' : 'OFF';
+      document.getElementById("hornStatus").textContent =
+        data.emergency ? 'ACTIVE' : 'INACTIVE';
+      document.getElementById("waterLevelStatus").textContent =
+        `${data.waterLevel * 25}%`;
+      
+      // Update local state
+      isMobile = data.controlMode === 'mobile';
+      isManual = data.mode === 'manual';
+      
+      // Update button states
       document.getElementById('mobileControlBtn').className =
-         `${isMobile ? 'control-mode-btn active' : 'control-mode-btn'}`;
+        isMobile ? 'control-mode-btn active' : 'control-mode-btn';
       document.getElementById('panelControlBtn').className =
-         `${isMobile ? 'control-mode-btn' : 'control-mode-btn active'}`;    
-          // Update operation mode
-      document.getElementById('modeStatus').textContent =
-         `${isManual ? 'Manual' : 'Automatic'}`;
+        isMobile ? 'control-mode-btn' : 'control-mode-btn active';
       document.getElementById('autoBtn').className =
-         `${isManual ? 'mode-btn' : 'mode-btn active'}`;
+        isManual ? 'mode-btn' : 'mode-btn active';
       document.getElementById('manualBtn').className =
-         `${isManual ? 'mode-btn active' : 'mode-btn'}`;
-          // Update motor states
-      document.getElementById('motor1Status').textContent =
-        `${data.motor1 ? 'ON' : 'OFF';
-      document.getElementById('motor2Status').textContent =
-        `${data.motor2 ? 'ON' : 'OFF';
-      document.getElementById('hornStatus').textContent =
-        `${data.emergency ? 'ACTIVE' : 'INACTIVE';
-      document.getElementById('waterLevelStatus').textContent =
-        `${data.waterLevel * 25 + '%';
-
-              // Enable/disable buttons based on control mode and operation mode
-          const buttonsDisabled = !isMobile;
+        isManual ? 'mode-btn active' : 'mode-btn';
+      
+      // Enable/disable buttons
+      const buttonsDisabled = !isMobile;
       document.getElementById('autoBtn').disabled = buttonsDisabled;
       document.getElementById('manualBtn').disabled = buttonsDisabled;
       document.getElementById('motor1On').disabled = buttonsDisabled || !isManual;
@@ -256,9 +273,17 @@
       document.getElementById('motor2Off').disabled = buttonsDisabled || !isManual;
     }
 
-    // Send commands to Firebase (ESP32 will listen)
+    // Send commands to Firebase
     function controlMotor(motor, state) {
-      database.ref(`/commands/motor${motor}`).set(state);
+      database.ref(`/commands/motor${motor}`).set(state === 1);
+    }
+
+    function setMode(mode) {
+      database.ref('/commands/mode').set(mode);
+    }
+
+    function setControlMode(mode) {
+      database.ref('/commands/controlMode').set(mode);
     }
   </script>
 </body>
