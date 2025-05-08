@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
-<style>
+  <style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -151,6 +151,7 @@
   </style>
 </head>
 <body>
+  
   <div class="container">
     <h1>SFA Control Panel</h1>
 
@@ -194,7 +195,7 @@
     </div>
   </div>
 
- <script>
+<script>
     // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyB0RjvOZYVNqTJN6Ri709GMnvMP1QsG3fk",
@@ -219,7 +220,7 @@
 
     // Update UI with Firebase data
     function updateUI(data) {
-      // Update lights
+      // Update status indicators
       document.getElementById("motor1Light").className = 
         `light motor1 ${data.motor1 ? 'on' : ''}`;
       document.getElementById("motor2Light").className = 
@@ -227,7 +228,7 @@
       document.getElementById("hornLight").className = 
         `light horn ${data.emergency ? 'alarm' : ''}`;
       
-      // Update water level
+      // Update water level display
       document.getElementById("waterFill").style.width = 
         `${data.waterLevel * 25}%`;
       
@@ -245,7 +246,7 @@
       document.getElementById("waterLevelStatus").textContent =
         `${data.waterLevel * 25}%`;
       
-      // Update local state
+      // Update local state variables
       isMobile = data.controlMode === 'mobile';
       isManual = data.mode === 'manual';
       
@@ -259,7 +260,7 @@
       document.getElementById('manualBtn').className =
         isManual ? 'mode-btn active' : 'mode-btn';
       
-      // Enable/disable buttons
+      // Enable/disable buttons based on mode
       const buttonsDisabled = !isMobile;
       document.getElementById('autoBtn').disabled = buttonsDisabled;
       document.getElementById('manualBtn').disabled = buttonsDisabled;
@@ -269,18 +270,28 @@
       document.getElementById('motor2Off').disabled = buttonsDisabled || !isManual;
     }
 
-    // Send commands to Firebase
+    // Send motor commands to Firebase
     function controlMotor(motor, state) {
-      database.ref(`/commands/motor${motor}`).set(state === 1);
+      const command = {};
+      command[`motor${motor}`] = (state === 1);
+      database.ref('/commands').update(command);
     }
 
+    // Send mode commands to Firebase
     function setMode(mode) {
-      database.ref('/commands/mode').set(mode);
+      database.ref('/commands').update({
+        mode: mode
+      });
     }
 
+    // Send control mode commands to Firebase
     function setControlMode(mode) {
-      database.ref('/commands/controlMode').set(mode);
+      database.ref('/commands').update({
+        controlMode: mode
+      });
     }
   </script>
+</body>
+</html>
 </body>
 </html>
