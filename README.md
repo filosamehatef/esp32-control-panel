@@ -5,11 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
-  <style>
-    /* [Keep all your existing CSS exactly the same] */
-  </style>
-</head>
-<body>
+<style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
